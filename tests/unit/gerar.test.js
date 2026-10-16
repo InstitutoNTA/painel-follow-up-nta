@@ -109,7 +109,7 @@ test("fluxo completo: tom sugerido, chamada à API e conclusão", async () => {
   assert.equal(r.tom, "Acolhedor", "primeiro contato");
   assert.equal(r.texto, "Texto gerado para teste");
   assert.equal(cabecalhos["x-api-key"], "chave-de-teste");
-  assert.equal(corpoEnviado.model, "claude-sonnet-5-5");
+  assert.equal(corpoEnviado.model, "claude-haiku-5-5");
   assert.ok(corpoEnviado.messages[0].content.includes("Mais curta"));
   assert.deepEqual(chamadas.map((c) => c[0]),
     ["srv_contexto_geracao", "srv_reservar_geracao", "srv_contexto_geracao", "srv_concluir_geracao"]);

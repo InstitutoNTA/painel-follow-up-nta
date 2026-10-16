@@ -6,7 +6,7 @@
 import { TONS, tomSugerido } from "./regras.js";
 import { montarPrompt, limparTexto } from "./prompt.js";
 
-export const MODELO_PADRAO = "claude-sonnet-5-5";
+export const MODELO_PADRAO = "claude-haiku-5-5";   // troque por ANTHROPIC_MODEL=claude-sonnet-5-5 se quiser textos mais elaborados
 const URL_API_PADRAO = "https://api.anthropic.com";
 const TEMPO_LIMITE_MS = 45_000;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

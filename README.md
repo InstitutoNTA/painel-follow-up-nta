@@ -109,7 +109,7 @@ Sem a chave, o painel funciona normalmente e mostra “A geração de mensagens 
 | Nome | Onde | Obrigatória | Para quê |
 |---|---|---|---|
 | `ANTHROPIC_API_KEY` | Segredos do Supabase | Sim | Chamar a API do Claude |
-| `ANTHROPIC_MODEL` | Segredos do Supabase | Não | Trocar o modelo (padrão `claude-sonnet-5-5`) |
+| `ANTHROPIC_MODEL` | Segredos do Supabase | Não | Trocar o modelo (padrão `claude-haiku-5-5`, mais econômico; use `claude-sonnet-5-5` para textos mais elaborados) |
 | `ALLOWED_ORIGINS` | Segredos do Supabase | Recomendada | Endereços que podem chamar a função |
 | `ANTHROPIC_BASE_URL` | — | Não | Só para testes locais |
 | `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` | Automáticas | — | Fornecidas pelo Supabase à função |
