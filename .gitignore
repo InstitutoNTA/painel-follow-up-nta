@@ -1,0 +1,10 @@
+# Segredos: NUNCA versionar
+.env
+.env.*
+!.env.example
+supabase/.env
+supabase/.temp/
+supabase/functions/.env
+# Dependências e sistema
+node_modules/
+.DS_Store

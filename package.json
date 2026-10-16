@@ -1,0 +1,11 @@
+{
+  "name": "painel-follow-up-nta",
+  "private": true,
+  "description": "Painel de Follow-up do Sucesso do Aluno — Instituto NTA",
+  "type": "module",
+  "scripts": {
+    "test": "npm run test:db && npm run test:unit",
+    "test:db": "bash tests/sql/rodar.sh",
+    "test:unit": "node --test tests/unit/"
+  }
+}
