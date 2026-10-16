@@ -7,7 +7,37 @@ import { diaUtil, horaLocal, hojeLocal, diasEmAberto } from "./regras.js";
 import { esc, $, toast, plural } from "./ui.js";
 import * as api from "./api.js";
 import { estado, recarregar, redesenhar } from "./app.js";
-import { precisaGerarHoje } from "./students.js";
+import { precisaGerarHoje, primeiroContato, diaAcompanhamento, sugerido } from "./students.js";
+import { CONFIG } from "./config.js";
+import { montarMensagemModelo } from "./modelos.js";
+
+// Avisos para os códigos devolvidos pelo banco (mesmos textos da função de servidor)
+const AVISOS = {
+  fim_de_semana: "As mensagens são geradas somente de segunda a sexta-feira.",
+  concluido: "Este aluno já concluiu todas as pendências e não recebe novas mensagens.",
+  sem_pendencias: "Marque ao menos uma pendência em aberto para gerar a mensagem.",
+  em_andamento: "Já existe uma mensagem sendo gerada para este aluno. Aguarde alguns segundos.",
+  ja_existe: "A mensagem de hoje deste aluno já está pronta.",
+  limite: "Muitas mensagens geradas em pouco tempo. Aguarde alguns minutos e tente de novo.",
+  sem_permissao: "Seu usuário não tem permissão para gerar mensagens.",
+  nao_encontrado: "Aluno não encontrado.",
+  invalido: "Pedido inválido.",
+};
+
+/** Modo sem IA: o texto é montado aqui pelos modelos e gravado pelo banco, com as mesmas regras. */
+async function gerarPorModelo(alunoId, { tom, instrucao, modo }) {
+  const a = estado.alunos.get(alunoId);
+  if (!a) return { status: "nao_encontrado", aviso: AVISOS.nao_encontrado };
+  const hoje = hojeLocal();
+  const tomFinal = tom || sugerido(a, hoje);
+  const texto = montarMensagemModelo({
+    aluno: a, curso: a.curso?.nome || "", config: estado.config || {}, tom: tomFinal,
+    primeiroContato: primeiroContato(a, hoje), dia: diaAcompanhamento(a, hoje), hoje, extra: instrucao,
+  });
+  const r = await api.gerarMensagemModelo({ alunoId, tom: tomFinal, texto, instrucao, modo });
+  if (!r || !r.status) return { status: "ia_indisponivel", aviso: "O servidor não respondeu como esperado." };
+  return r.status === "concluida" ? { ...r, tom: tomFinal, texto } : { ...r, aviso: r.aviso || AVISOS[r.status] };
+}
 
 // Estado do lote em andamento (vale para a aba atual)
 export const lote = { ativo: false, feitos: 0, total: 0, falhas: [], parado: "" };
@@ -20,7 +50,9 @@ export async function gerarUma(alunoId, { tom = null, instrucao = "", modo = "ma
   if (gerandoAgora.has(alunoId)) return { status: "em_andamento" };
   gerandoAgora.add(alunoId);
   try {
-    return await api.gerarMensagem({ alunoId, tom, instrucao, modo });
+    return CONFIG.modoMensagens === "modelo"
+      ? await gerarPorModelo(alunoId, { tom, instrucao, modo })
+      : await api.gerarMensagem({ alunoId, tom, instrucao, modo });
   } finally {
     gerandoAgora.delete(alunoId);
   }

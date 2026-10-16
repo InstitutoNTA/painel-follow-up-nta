@@ -217,3 +217,4 @@ select teste.afirmar((select ativo from public.perfis where id = '00000000-0000-
   'admin ativa usuário');
 reset role;
 \ir 20_testes_geracao_backup.sql
+\ir 30_testes_modelo.sql

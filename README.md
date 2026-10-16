@@ -2,7 +2,16 @@
 
 Aplicação web para o time de Sucesso do Aluno acompanhar alunos com pendências de matrícula
 (nunca acessou a plataforma, não assinou o contrato, não subiu a documentação), gerar mensagens
-personalizadas para WhatsApp com a API do Claude e registrar envios e respostas.
+personalizadas para WhatsApp e registrar envios e respostas.
+
+As mensagens podem ser escritas de dois jeitos (`modoMensagens` em `assets/js/config.js`):
+
+- **`"modelo"` (padrão atual, sem custo)**: modelos automáticos por tom, preenchidos com nome, curso,
+  pendências, dias em aberto, dor principal, links e assinatura. Nenhuma IA é chamada.
+- **`"ia"`**: texto escrito pela API do Claude (seção 6). A API é cobrada por uso, à parte da assinatura do Claude.
+
+Nos dois modos o banco aplica as mesmas regras (dia útil, uma por dia, nada para concluídos, limites,
+histórico). As versões do modo sem IA aparecem como “modelo automático” no histórico.
 
 Funciona no navegador do computador, tablet ou celular, com login individual. Quem usa o painel
 **não precisa** de assinatura do Claude nem de conta no GitHub.
@@ -55,8 +64,8 @@ Supabase ── Auth (login individual)
 ## 2. Pré-requisitos
 
 - Conta no **Supabase** (plano gratuito atende) — https://supabase.com
-- Conta no **Console da Anthropic** com créditos para a API — https://console.anthropic.com
-  (a API é cobrada por uso, separada de qualquer assinatura do Claude)
+- Só para o modo `"ia"`: conta no **Console da Anthropic** com créditos para a API — https://console.anthropic.com
+  (a API é cobrada por uso, separada de qualquer assinatura do Claude). O modo `"modelo"` não precisa.
 - Repositório no GitHub do Instituto NTA com GitHub Pages
 - Para desenvolver e testar localmente: Node 20+, PostgreSQL 16, Deno 2 e (opcional) Supabase CLI
 
@@ -95,7 +104,9 @@ Opção B — GitHub Actions: cadastre os segredos `SUPABASE_ACCESS_TOKEN`, `SUP
 Para conferir: no Supabase, **Table Editor** deve listar as tabelas acima, e
 **Authentication → Policies** deve mostrar RLS ativo em todas.
 
-## 6. Configuração da API do Claude
+## 6. Configuração da API do Claude (opcional — só para o modo `"ia"`)
+
+Para ligar: siga os passos abaixo e troque `modoMensagens` para `"ia"` em `assets/js/config.js`.
 
 1. No Console da Anthropic, crie uma chave em **API Keys → Create Key**.
 2. No Supabase, **Edge Functions → Secrets → Add new secret**: nome `ANTHROPIC_API_KEY`, valor = a chave.
@@ -140,7 +151,7 @@ Usuário novo entra **inativo** e não vê nenhum dado até ser ativado.
 | `npm run test:db` | Migrations e regras do banco num PostgreSQL local descartável (RLS, validações, histórico, geração diária, envio por versão, retenção, backup). |
 | `npm run test:unit` | Cálculo de dias, prazos e tons; instruções do agente; fluxo da função com dublês. |
 | `npm run check:function` | Tipos da Edge Function (Deno). |
-| `npm run test:e2e` | Ponta a ponta num navegador real: Auth + PostgREST + função + site locais, com dublê da API do Claude. |
+| `npm run test:e2e` | Ponta a ponta num navegador real: Auth + PostgREST + função + site locais, com dublê da API do Claude; depois repete o fluxo principal no modo sem IA. |
 
 Todos usam somente dados fictícios. Resultados da última execução: ver `docs/TESTES.md`.
 
@@ -178,7 +189,8 @@ Depois de publicar, valide: login, cadastro de um aluno de teste, geração da m
 |---|---|---|
 | “O painel ainda não foi conectado ao banco” | `config.js` vazio | Preencha URL e chave anon. |
 | “Acesso aguardando liberação” | Usuário inativo | Admin ativa em Configurações → Usuários. |
-| “A geração de mensagens ainda não foi configurada” | Falta `ANTHROPIC_API_KEY` ou a função não foi publicada | Veja a seção 6. |
+| “A geração de mensagens ainda não foi configurada” | Modo `"ia"` sem `ANTHROPIC_API_KEY` ou sem a função publicada | Veja a seção 6 ou volte para `"modelo"`. |
+| “A atualização do banco para mensagens automáticas ainda não foi aplicada” | Falta a migration `20261016120600_mensagens_modelo.sql` | Rode o arquivo no SQL Editor do Supabase. |
 | “Muitas mensagens geradas em pouco tempo” | Limite de 40 gerações a cada 10 min por usuário ou 10 por aluno por dia | Aguarde alguns minutos. |
 | “As mensagens são geradas somente de segunda a sexta” | Fim de semana (horário de Brasília) | Comportamento esperado. |
 | Link do e-mail de convite não abre o painel | *Site URL* ou *Redirect URLs* errados | Seção 8, passo 2. |

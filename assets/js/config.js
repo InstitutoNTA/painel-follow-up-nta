@@ -8,4 +8,8 @@
 export const CONFIG = {
   supabaseUrl: "https://seqzfanzbkgkbukzvmkf.supabase.co",
   supabaseAnonKey: "sb_publishable_C_V3ge45gBSxWxOyeTthCQ_tg4YQM_g",   // chave pública "publishable"
+  // Como as mensagens são escritas:
+  //  "modelo" = modelos automáticos prontos, sem custo (padrão atual);
+  //  "ia"     = API do Claude pela função de servidor (exige a chave nos segredos do Supabase).
+  modoMensagens: "modelo",
 };

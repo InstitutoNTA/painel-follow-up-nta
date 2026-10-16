@@ -5,10 +5,11 @@ Supabase Auth v2.197.0, PostgREST v12.2.3, Chromium). Somente dados fictícios.
 
 | Conjunto | Resultado |
 |---|---|
-| Banco (`npm run test:db`) | **93 verificações aprovadas** |
-| Regras, prompt e função (`npm run test:unit`) | **24 testes aprovados** |
+| Banco (`npm run test:db`) | **102 verificações aprovadas** (inclui o modo sem IA) |
+| Regras, modelos, prompt e função (`npm run test:unit`) | **36 testes aprovados** |
 | Tipos da Edge Function (`npm run check:function`) | **aprovado** |
-| Ponta a ponta no navegador (`npm run test:e2e`) | **25 etapas aprovadas** |
+| Ponta a ponta no navegador, modo IA (`npm run test:e2e`) | **25 etapas aprovadas** |
+| Ponta a ponta no navegador, modo modelo automático (sem IA) | **5 etapas aprovadas** — mensagem escrita pelo modelo, gravada com as regras do banco, nenhuma chamada à IA |
 
 O teste ponta a ponta usa um **dublê da API do Claude** (devolve um texto fixo marcado “TESTE”), para
 validar o fluxo sem custo. A chamada real à API só pode ser validada depois que a chave for configurada

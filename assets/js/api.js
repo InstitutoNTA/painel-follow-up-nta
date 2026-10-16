@@ -165,6 +165,24 @@ export async function gerarMensagem({ alunoId, tom = null, instrucao = "", modo 
   return { status: "ia_indisponivel", aviso: "O servidor não respondeu como esperado. Tente de novo em instantes." };
 }
 
+/** Grava uma mensagem escrita por modelo automático (sem IA). Mesmas regras do banco. */
+export async function gerarMensagemModelo({ alunoId, tom, texto, instrucao = "", modo }) {
+  try {
+    const { data, error } = await sb.rpc("gerar_mensagem_modelo", {
+      p_aluno: alunoId, p_tom: tom, p_texto: texto, p_modo: modo, p_instrucao: instrucao || null,
+    });
+    if (error) {
+      if (error.code === "42501") return { status: "sem_permissao" };
+      if (error.code === "PGRST202") return { status: "ia_nao_configurada",
+        aviso: "A atualização do banco para mensagens automáticas ainda não foi aplicada." };
+      return { status: "ia_indisponivel", aviso: traduzir(error).message };
+    }
+    return data;
+  } catch {
+    return { status: "rede", aviso: "Sem conexão com o servidor. Os dados estão salvos; tente de novo." };
+  }
+}
+
 // ---------- Configurações ---------------------------------------------------
 export const salvarConfig = (c) => exec(sb.from("configuracoes").update({
   assinante: (c.assinante || "").trim(),

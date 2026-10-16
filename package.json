@@ -8,6 +8,6 @@
     "test:db": "bash tests/sql/rodar.sh",
     "test:unit": "node --test tests/unit/*.test.js",
     "check:function": "bash scripts/checar-funcao.sh",
-    "test:e2e": "bash tests/e2e/rodar.sh"
+    "test:e2e": "bash tests/e2e/rodar.sh && E2E_MODO=modelo E2E_FLUXO=fluxo-modelo.mjs bash tests/e2e/rodar.sh"
   }
 }

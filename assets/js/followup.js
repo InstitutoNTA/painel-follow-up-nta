@@ -10,6 +10,9 @@ import * as api from "./api.js";
 import { estado, prazo, recarregar, ir } from "./app.js";
 import { msgHoje, sugerido, diaAcompanhamento, barraUsuario } from "./students.js";
 import { gerarUma, gerandoAgora } from "./messages.js";
+import { CONFIG } from "./config.js";
+
+const MODO_MODELO = CONFIG.modoMensagens === "modelo";
 
 const tomEscolhido = new Map();   // aluno -> tom selecionado na tela
 const rascunho = new Map();       // aluno -> instrução digitada (mantida se a geração falhar)
@@ -148,15 +151,16 @@ function cartaoMensagem(a, m, tom, sug, gerando, hoje) {
         aria-pressed="${t === tom}">${t}</button>`).join("")}
     </div>
     <details class="recolhido" ${rascunho.get(a.id) ? "open" : ""}>
-      <summary>O que mudar na mensagem (opcional)</summary>
-      <label class="sr-only" for="instrucao">O que mudar na mensagem</label>
-      <textarea id="instrucao" maxlength="1000" placeholder="Ex.: mencionar que a aula de boas-vindas é quinta-feira">${esc(rascunho.get(a.id) || "")}</textarea>
+      <summary>${MODO_MODELO ? "Frase extra para incluir (opcional)" : "O que mudar na mensagem (opcional)"}</summary>
+      <label class="sr-only" for="instrucao">${MODO_MODELO ? "Frase extra para incluir na mensagem" : "O que mudar na mensagem"}</label>
+      ${MODO_MODELO ? `<p class="dica">A frase entra na mensagem exatamente como você escrever, antes do fechamento.</p>` : ""}
+      <textarea id="instrucao" maxlength="1000" placeholder="${MODO_MODELO ? "Ex.: Lembrando que a aula de boas-vindas é na quinta-feira, às 19h." : "Ex.: mencionar que a aula de boas-vindas é quinta-feira"}">${esc(rascunho.get(a.id) || "")}</textarea>
     </details>
     ${!util ? `<div class="aviso info"><span>As mensagens são geradas somente de segunda a sexta-feira.</span></div>` : ""}
     <div id="area-msg">
       ${gerando ? `<div class="carregando"><span class="giro" aria-hidden="true"></span> Gerando a mensagem…</div>`
         : v ? `<div class="texto-mensagem" id="texto-msg">${esc(v.texto)}</div>
-               <div class="small muted">Tom ${esc(v.tom)} · versão ${v.versao}${v.instrucao ? ` · instrução: “${esc(v.instrucao)}”` : ""}</div>`
+               <div class="small muted">Tom ${esc(v.tom)} · versão ${v.versao}${v.modelo === "modelo-automatico" ? " · modelo automático" : ""}${v.instrucao ? ` · ${MODO_MODELO ? "frase extra" : "instrução"}: “${esc(v.instrucao)}”` : ""}</div>`
         : falha ? `<div class="aviso erro"><span>A última tentativa falhou: ${esc(falha.erro || "erro desconhecido")}. Os dados estão salvos.</span></div>`
         : `<p class="muted">Nenhuma mensagem gerada hoje para este aluno.</p>`}
     </div>
@@ -180,6 +184,7 @@ function historico(a) {
     <div class="linha small">
       <strong>${esc(formatarData(v.data))}</strong><span class="muted">dia ${esc(v.dia ?? "—")} · versão ${v.versao}</span>
       <span class="tag tom-${esc(v.tom)}">${esc(v.tom)}</span>
+      ${v.modelo === "modelo-automatico" ? `<span class="tag">Modelo automático</span>` : ""}
       ${v.estado_geracao === "falhou" ? `<span class="tag verm">Falhou</span>`
         : v.enviada_em ? `<span class="tag verde">Enviada</span>` : `<span class="tag">Não enviada</span>`}
     </div>

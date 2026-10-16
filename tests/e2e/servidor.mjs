@@ -47,7 +47,7 @@ http.createServer((req, res) => {
   if (url === "/") url = "/index.html";
   if (url === "/assets/js/config.js") {
     res.writeHead(200, { "content-type": tipos[".js"] });
-    res.end(`export const CONFIG = { supabaseUrl: "http://localhost:54321", supabaseAnonKey: "${ANON}" };`);
+    res.end(`export const CONFIG = { supabaseUrl: "http://localhost:54321", supabaseAnonKey: "${ANON}", modoMensagens: "${process.env.E2E_MODO || "ia"}" };`);
     return;
   }
   const arquivo = path.join(RAIZ, path.normalize(url));

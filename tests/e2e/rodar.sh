@@ -94,7 +94,7 @@ cp -r supabase/functions "$TMP/functions"; echo '{}' > "$TMP/functions/deno.json
   deno run --allow-net --allow-env --allow-read gerar-mensagem/index.ts >"$TMP/funcao.log" 2>&1) & PIDS+=($!)
 
 # ---------- gateway, site e dublê da IA ----------
-E2E_ANON_KEY="$ANON" E2E_LOG_IA="$TMP/ia.log" node tests/e2e/servidor.mjs >"$TMP/site.log" 2>&1 & PIDS+=($!)
+E2E_MODO="${E2E_MODO:-ia}" E2E_ANON_KEY="$ANON" E2E_LOG_IA="$TMP/ia.log" node tests/e2e/servidor.mjs >"$TMP/site.log" 2>&1 & PIDS+=($!)
 esperar http://127.0.0.1:8080/
 for _ in $(seq 1 60); do curl -s -o /dev/null -X OPTIONS http://127.0.0.1:8000/ && break; sleep 0.5; done
 
@@ -109,4 +109,4 @@ psql -X -q -d "$DB" -c "update public.perfis set papel='admin', ativo=true, nome
 
 # ---------- navegador ----------
 E2E_AGORA="$AGORA_TESTE" E2E_ANON_KEY="$ANON" E2E_DB="$DB" E2E_LOG_IA="$TMP/ia.log" E2E_SAIDA="${E2E_SAIDA:-$RAIZ/tests/e2e/.saida}" \
-  node tests/e2e/fluxo.mjs
+  node "tests/e2e/${E2E_FLUXO:-fluxo.mjs}"
