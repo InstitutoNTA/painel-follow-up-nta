@@ -7,7 +7,7 @@ import { TONS, tomSugerido } from "./regras.js";
 import { montarPrompt, limparTexto } from "./prompt.js";
 
 export const MODELO_PADRAO = "claude-sonnet-5-5";
-const URL_API = "https://api.anthropic.com/v1/messages";
+const URL_API_PADRAO = "https://api.anthropic.com";
 const TEMPO_LIMITE_MS = 45_000;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -38,12 +38,12 @@ export function validarPedido(corpo) {
 }
 
 /** Chama a API do Claude e devolve o texto. Lança erro com .codigo seguro. */
-export async function chamarClaude({ fetch, chave, modelo, sistema, usuario }) {
+export async function chamarClaude({ fetch, chave, modelo, sistema, usuario, urlBase = URL_API_PADRAO }) {
   const controle = new AbortController();
   const timer = setTimeout(() => controle.abort(), TEMPO_LIMITE_MS);
   let resp;
   try {
-    resp = await fetch(URL_API, {
+    resp = await fetch(`${String(urlBase).replace(/\/+$/, "")}/v1/messages`, {
       method: "POST",
       signal: controle.signal,
       headers: {
@@ -87,10 +87,11 @@ export async function chamarClaude({ fetch, chave, modelo, sistema, usuario }) {
  * @param {typeof fetch} p.fetch
  * @param {string|undefined} p.chave   ANTHROPIC_API_KEY
  * @param {string|undefined} p.modelo  ANTHROPIC_MODEL
+ * @param {string|undefined} p.urlBase ANTHROPIC_BASE_URL (opcional; padrão: API oficial)
  * @param {string} p.usuarioId         id do usuário autenticado
  * @param {object} p.pedido            resultado de validarPedido
  */
-export async function gerarMensagem({ rpc, fetch, chave, modelo, usuarioId, pedido }) {
+export async function gerarMensagem({ rpc, fetch, chave, modelo, urlBase, usuarioId, pedido }) {
   if (!chave) return { status: "ia_nao_configurada", aviso: AVISOS.ia_nao_configurada };
 
   // 1) contexto para decidir o tom sugerido
@@ -118,7 +119,8 @@ export async function gerarMensagem({ rpc, fetch, chave, modelo, usuarioId, pedi
   try {
     const ctx = await rpc("srv_contexto_geracao", { p_aluno: pedido.aluno_id });
     const { sistema, usuario } = montarPrompt(ctx, tom, pedido.instrucao);
-    const r = await chamarClaude({ fetch, chave, modelo: modelo || MODELO_PADRAO, sistema, usuario });
+    const r = await chamarClaude({ fetch, chave, modelo: modelo || MODELO_PADRAO, sistema, usuario,
+      urlBase: urlBase || URL_API_PADRAO });
     const fim = await rpc("srv_concluir_geracao", { p_versao: reserva.versao_id, p_texto: r.texto, p_modelo: r.modelo });
     if (fim?.status !== "concluida") {
       return { status: "ia_indisponivel", aviso: AVISOS.ia_indisponivel };

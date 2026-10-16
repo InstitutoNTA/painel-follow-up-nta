@@ -8,3 +8,5 @@ supabase/functions/.env
 # Dependências e sistema
 node_modules/
 .DS_Store
+tests/e2e/.bin/
+tests/e2e/.saida/

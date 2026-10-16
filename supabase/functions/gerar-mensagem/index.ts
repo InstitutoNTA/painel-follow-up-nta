@@ -7,6 +7,7 @@
 // Segredos/variáveis (Supabase → Edge Functions → Secrets):
 //   ANTHROPIC_API_KEY  (obrigatório para gerar)
 //   ANTHROPIC_MODEL    (opcional; padrão definido em _shared/gerar.js)
+//   ANTHROPIC_BASE_URL (opcional; só para testes locais — padrão: API oficial)
 //   ALLOWED_ORIGINS    (opcional; ex.: https://institutonta.github.io)
 //   SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY
 //                      (fornecidas automaticamente pelo Supabase)
@@ -75,6 +76,7 @@ Deno.serve(async (req) => {
       fetch,
       chave: Deno.env.get("ANTHROPIC_API_KEY"),
       modelo: Deno.env.get("ANTHROPIC_MODEL"),
+      urlBase: Deno.env.get("ANTHROPIC_BASE_URL"),
       usuarioId: dadosUsuario.user.id,
       pedido,
     });

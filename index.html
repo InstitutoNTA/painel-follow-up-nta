@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light only">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <!-- Política de segurança: scripts só deste site e da CDN fixada; conexões só com o Supabase. -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co; img-src 'self' data:; base-uri 'self'; form-action 'self'; object-src 'none'">
+  <title>Painel de Follow-up</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+  <main id="app" aria-live="polite">
+    <div class="carregando"><span class="giro" aria-hidden="true"></span> Carregando o painel…</div>
+  </main>
+  <div id="toast" role="status" hidden></div>
+  <noscript><p class="container">O Painel de Follow-up precisa do JavaScript ativado no navegador.</p></noscript>
+  <script type="module" src="assets/js/app.js"></script>
+</body>
+</html>
