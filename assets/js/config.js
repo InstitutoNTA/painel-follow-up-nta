@@ -6,6 +6,6 @@
 // Onde encontrar: Supabase → Project Settings → API.
 // =====================================================================
 export const CONFIG = {
-  supabaseUrl: "",       // ex.: https://abcdefghijkl.supabase.co
-  supabaseAnonKey: "",   // chave "anon" / "publishable"
+  supabaseUrl: "https://seqzfanzbkgkbukzvmkf.supabase.co",
+  supabaseAnonKey: "sb_publishable_C_V3ge45gBSxWxOyeTthCQ_tg4YQM_g",   // chave pública "publishable"
 };
