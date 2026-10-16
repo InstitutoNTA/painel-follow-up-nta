@@ -1,0 +1,8 @@
+# Configuração do Supabase CLI para este projeto.
+# O project_id é preenchido pelo comando "supabase link" (não é segredo).
+project_id = "painel-follow-up-nta"
+
+[functions.gerar-mensagem]
+# O gateway do Supabase só aceita chamadas com token de usuário válido;
+# a função ainda confere o usuário e se o perfil está ativo.
+verify_jwt = true
