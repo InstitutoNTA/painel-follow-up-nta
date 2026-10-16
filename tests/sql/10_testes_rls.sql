@@ -111,8 +111,31 @@ select teste.afirmar((select estado_acompanhamento from public.alunos where nome
 select teste.afirmar(teste.contar($q$select * from public.pendencias_historico where acao in ('resolvida','reaberta')$q$) = 3,
   'histórico registra resoluções e reaberturas');
 
-select teste.afirmar(teste.tentar($q$update public.pendencias set estado = 'resolvida' where tipo = 'acesso'$q$) = '23514',
-  'resolver exige data de resolução');
+update public.pendencias p set estado = 'resolvida'
+  from public.alunos a where a.id = p.aluno_id and a.nome is null and p.tipo = 'acesso';
+select teste.afirmar((select resolvida_em = privado.hoje() from public.pendencias p join public.alunos a on a.id = p.aluno_id
+                       where a.nome is null and p.tipo = 'acesso'), 'resolver sem data registra hoje');
+select teste.afirmar(teste.tentar($q$update public.pendencias set data_referencia = date '2020-01-01'$q$) = '42501',
+  'data de referência não é editável pelo usuário');
+
+-- Prompt mestre 10.1: editar o aluno não reinicia a contagem
+reset role;
+update public.pendencias p set data_referencia = date '2026-10-01'
+  from public.alunos a where a.id = p.aluno_id and a.nome = 'Aluno Teste Um' and p.tipo = 'contrato';
+set role authenticated;
+update public.alunos set dor_principal = 'Teste editado' where nome = 'Aluno Teste Um';
+update public.pendencias p set estado = 'resolvida'
+  from public.alunos a where a.id = p.aluno_id and a.nome = 'Aluno Teste Um' and p.tipo = 'contrato';
+update public.pendencias p set estado = 'pendente'
+  from public.alunos a where a.id = p.aluno_id and a.nome = 'Aluno Teste Um' and p.tipo = 'contrato';
+select teste.afirmar((select data_referencia = date '2026-10-01' from public.pendencias p join public.alunos a on a.id = p.aluno_id
+                       where a.nome = 'Aluno Teste Um' and p.tipo = 'contrato'),
+  'editar dados ou resolver/reabrir não reinicia a contagem');
+update public.pendencias p set dias_informados = 5
+  from public.alunos a where a.id = p.aluno_id and a.nome = 'Aluno Teste Um' and p.tipo = 'contrato';
+select teste.afirmar((select data_referencia = privado.hoje() from public.pendencias p join public.alunos a on a.id = p.aluno_id
+                       where a.nome = 'Aluno Teste Um' and p.tipo = 'contrato'),
+  'mudar "Pendente há N dias" atualiza a data de referência');
 select teste.afirmar(teste.tentar($q$update public.pendencias set tipo = 'acesso'$q$) = '42501',
   'tipo da pendência não pode mudar');
 select teste.afirmar(teste.tentar($q$insert into public.pendencias (aluno_id, tipo) select id, 'acesso' from public.alunos limit 1$q$) = '42501',
@@ -136,8 +159,10 @@ select teste.afirmar(teste.contar('select * from public.perfis') = 1, 'operadora
 select teste.afirmar(teste.tentar($q$update public.perfis set papel = 'admin' where id = auth.uid()$q$) = '42501',
   'operadora não se promove a admin');
 select teste.afirmar(teste.contar('select * from public.auditoria') = 0, 'operadora não lê a auditoria');
-select teste.afirmar(teste.tentar($q$delete from public.alunos$q$) = 'ok' and teste.contar('select * from public.alunos') = 2,
-  'operadora não exclui alunos');
+select teste.afirmar(teste.tentar($q$select public.srv_reservar_geracao(gen_random_uuid(), auth.uid(), 'Firme', '', 'manual')$q$) = '42501',
+  'operadora não chama funções exclusivas do servidor');
+select teste.afirmar(teste.tentar($q$select public.importar_backup('{}'::jsonb)$q$) = '42501',
+  'operadora não importa backup');
 reset role;
 
 -- ========== 3. Servidor (Edge Function com service_role) ==================
@@ -190,8 +215,5 @@ select teste.afirmar(teste.tentar($q$update public.perfis set ativo = false wher
 update public.perfis set ativo = true where id = '00000000-0000-0000-0000-00000000000c';
 select teste.afirmar((select ativo from public.perfis where id = '00000000-0000-0000-0000-00000000000c'),
   'admin ativa usuário');
-delete from public.alunos where nome is null;
-select teste.afirmar(teste.contar('select * from public.alunos') = 1, 'admin exclui aluno');
-select teste.afirmar(teste.contar($q$select * from public.auditoria where tabela = 'alunos' and operacao = 'DELETE'$q$) = 1,
-  'exclusão fica registrada na auditoria');
 reset role;
+\ir 20_testes_geracao_backup.sql

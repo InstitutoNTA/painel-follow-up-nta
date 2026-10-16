@@ -38,7 +38,7 @@ grant update (nome, email, telefone, data_compra, curso_id, momento_profissional
               dor_principal, observacoes)
                                      on public.alunos               to authenticated;
 grant select                         on public.pendencias           to authenticated;
-grant update (marcada, estado, data_referencia, dias_informados, resolvida_em)
+grant update (marcada, estado, dias_informados, resolvida_em)
                                      on public.pendencias           to authenticated;
 grant select                         on public.pendencias_historico to authenticated;
 grant select                         on public.mensagens            to authenticated;
@@ -76,8 +76,9 @@ create policy alunos_inserir on public.alunos for insert to authenticated
   with check (privado.usuario_ativo());
 create policy alunos_editar on public.alunos for update to authenticated
   using (privado.usuario_ativo()) with check (privado.usuario_ativo());
+-- Exclusão: usuários ativos (prompt mestre 11.4); fica registrada na auditoria.
 create policy alunos_excluir on public.alunos for delete to authenticated
-  using (privado.eh_admin());
+  using (privado.usuario_ativo());
 
 -- Pendências (as linhas são criadas pelo banco; o usuário só atualiza)
 create policy pendencias_ler on public.pendencias for select to authenticated
@@ -117,5 +118,6 @@ create policy auditoria_ler on public.auditoria for select to authenticated
 
 -- 4) Funções internas não podem ser chamadas pela API ----------------------
 revoke execute on all functions in schema privado from public, anon;
-grant  execute on function privado.usuario_ativo(), privado.eh_admin(), privado.hoje()
+grant  execute on function privado.usuario_ativo(), privado.eh_admin(), privado.hoje(), privado.agora(),
+                            privado.versao_vigente(uuid)
   to authenticated, service_role;

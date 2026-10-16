@@ -51,6 +51,19 @@ begin
                         = (v_depois - 'atualizado_em' - 'atualizado_por') then
     return null;
   end if;
+  -- Exclusão de aluno (política de retenção): apaga os registros de auditoria
+  -- com dados pessoais dele e guarda só o fato da exclusão, sem dados pessoais.
+  if tg_table_name = 'alunos' and tg_op = 'DELETE' then
+    delete from public.auditoria
+     where (tabela = 'alunos' and registro_id = old.id::text)
+        or antes  ->> 'aluno_id' = old.id::text
+        or depois ->> 'aluno_id' = old.id::text;
+    v_antes := jsonb_build_object('id', old.id, 'curso_id', old.curso_id,
+                                  'estado_acompanhamento', old.estado_acompanhamento,
+                                  'data_cadastro', old.data_cadastro);
+  elsif tg_op = 'DELETE' and tg_table_name in ('respostas', 'mensagens') then
+    v_antes := jsonb_build_object('id', old.id, 'aluno_id', old.aluno_id);   -- sem textos
+  end if;
   insert into public.auditoria (tabela, registro_id, operacao, antes, depois, usuario_id)
   values (tg_table_name, coalesce(v_depois ->> 'id', v_antes ->> 'id'), tg_op, v_antes, v_depois, auth.uid());
   return null;
@@ -66,3 +79,20 @@ create trigger auditoria_mensagens     after update or delete on public.mensagen
   for each row execute function privado.auditar();
 create trigger auditoria_respostas     after insert or delete on public.respostas
   for each row execute function privado.auditar();
+
+-- =====================================================================
+-- Retenção: registros de auditoria são mantidos por 24 meses.
+-- Executar periodicamente (ver SECURITY.md); pode ser agendado com pg_cron.
+-- =====================================================================
+create or replace function privado.aplicar_retencao()
+returns integer
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare n integer;
+begin
+  delete from public.auditoria where criado_em < now() - interval '24 months';
+  get diagnostics n = row_count;
+  return n;
+end $$;

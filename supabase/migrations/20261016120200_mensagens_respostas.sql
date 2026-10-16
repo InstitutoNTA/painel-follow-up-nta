@@ -33,24 +33,6 @@ create trigger mensagens_atualizacao before update on public.mensagens
   for each row execute function privado.carimbar_atualizacao();
 
 -- Ao marcar/desmarcar como enviada, o banco preenche data e autor.
-create or replace function privado.registrar_envio()
-returns trigger
-language plpgsql
-set search_path = ''
-as $$
-begin
-  if new.estado_envio = 'enviada' and old.estado_envio <> 'enviada' then
-    new.enviada_em := now();
-    new.enviada_por := auth.uid();
-  elsif new.estado_envio = 'nao_enviada' then
-    new.enviada_em := null;
-    new.enviada_por := null;
-  end if;
-  return new;
-end $$;
-
-create trigger mensagens_envio before update of estado_envio on public.mensagens
-  for each row execute function privado.registrar_envio();
 
 create table public.mensagem_versoes (
   id              uuid primary key default gen_random_uuid(),
@@ -62,6 +44,8 @@ create table public.mensagem_versoes (
   estado_geracao  text not null default 'gerando' check (estado_geracao in ('gerando', 'concluida', 'falhou')),
   erro            text check (char_length(erro) <= 1000),
   modelo          text check (char_length(modelo) <= 80),
+  -- preenchido quando ESTA versão foi a marcada como enviada
+  enviada_em      timestamptz,
   gerada_por      uuid references public.perfis (id) on delete set null,
   criado_em       timestamptz not null default now(),
   concluido_em    timestamptz,
@@ -111,3 +95,70 @@ end $$;
 
 create trigger respostas_somente_insercao before update on public.respostas
   for each row execute function privado.bloquear_alteracao();
+
+-- =====================================================================
+-- Envio (prompt mestre 11.1): manual, persistente e reversível.
+-- Marcar como enviada registra quando, quem e QUAL versão foi enviada.
+-- =====================================================================
+create or replace function privado.versao_vigente(p_mensagem uuid)
+returns uuid
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select v.id from public.mensagem_versoes v
+   where v.mensagem_id = p_mensagem and v.estado_geracao = 'concluida'
+   order by v.versao desc limit 1
+$$;
+
+create or replace function privado.registrar_envio()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare v_versao uuid;
+begin
+  if new.estado_envio = old.estado_envio then return new; end if;
+  if new.estado_envio = 'enviada' then
+    v_versao := privado.versao_vigente(new.id);
+    if v_versao is null then
+      raise exception 'Não há mensagem gerada para marcar como enviada.' using errcode = '23514';
+    end if;
+    new.enviada_em := now();
+    new.enviada_por := auth.uid();
+    update public.mensagem_versoes set enviada_em = new.enviada_em where id = v_versao;
+  else
+    new.enviada_em := null;
+    new.enviada_por := null;
+    -- "desfazer" só limpa a versão vigente; quando a volta para "não enviada"
+    -- vem de uma nova versão gerada, a anterior continua registrada como enviada.
+    update public.mensagem_versoes set enviada_em = null
+     where id = privado.versao_vigente(new.id) and enviada_em = old.enviada_em;
+  end if;
+  return new;
+end $$;
+
+create trigger mensagens_envio before update of estado_envio on public.mensagens
+  for each row execute function privado.registrar_envio();
+
+-- Uma nova versão concluída passa a ser a vigente e ainda não foi enviada:
+-- o estado do dia volta para "não enviada" (a versão anterior mantém o registro).
+create or replace function privado.nova_versao_concluida()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if new.estado_geracao = 'concluida' and (tg_op = 'INSERT' or old.estado_geracao <> 'concluida') then
+    update public.mensagens
+       set estado_envio = 'nao_enviada', enviada_em = null, enviada_por = null
+     where id = new.mensagem_id and estado_envio = 'enviada';
+  end if;
+  return null;
+end $$;
+
+create trigger mensagem_versoes_concluida after insert or update of estado_geracao on public.mensagem_versoes
+  for each row execute function privado.nova_versao_concluida();

@@ -15,13 +15,24 @@ create schema if not exists privado;
 revoke all on schema privado from public;
 grant usage on schema privado to authenticated, service_role;
 
--- Data de hoje no fuso de Brasília -----------------------------------
+-- Relógio do sistema ---------------------------------------------------
+-- privado.agora() = now(). Só nos testes automatizados o parâmetro de sessão
+-- "painel.agora_teste" simula outro horário (ex.: sábado, 8h). Ele não pode ser
+-- definido pela API do Supabase: clientes não executam SET.
+create or replace function privado.agora()
+returns timestamptz
+language sql
+stable
+set search_path = ''
+as $$ select coalesce(nullif(current_setting('painel.agora_teste', true), '')::timestamptz, now()) $$;
+
+-- Data de hoje no fuso de Brasília
 create or replace function privado.hoje()
 returns date
 language sql
 stable
 set search_path = ''
-as $$ select (now() at time zone 'America/Sao_Paulo')::date $$;
+as $$ select (privado.agora() at time zone 'America/Sao_Paulo')::date $$;
 
 -- Atualiza "atualizado_em" e "atualizado_por" ---------------------------
 create or replace function privado.carimbar_atualizacao()
@@ -93,7 +104,7 @@ as $$
 $$;
 
 revoke all on function privado.usuario_ativo(), privado.eh_admin() from public;
-grant execute on function privado.usuario_ativo(), privado.eh_admin(), privado.hoje() to authenticated, service_role;
+grant execute on function privado.usuario_ativo(), privado.eh_admin(), privado.hoje(), privado.agora() to authenticated, service_role;
 
 -- Impede que um usuário altere o próprio papel/ativação sem ser admin,
 -- e que o último admin ativo seja rebaixado ou desativado.

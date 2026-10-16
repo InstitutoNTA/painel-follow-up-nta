@@ -162,8 +162,13 @@ end $$;
 create trigger alunos_criar_pendencias after insert on public.alunos
   for each row execute function privado.criar_pendencias_aluno();
 
--- Pendências não podem mudar de aluno nem de tipo
-create or replace function privado.pendencia_imutavel()
+-- Regras aplicadas a toda atualização de pendência (prompt mestre 10.1):
+--   * aluno e tipo não mudam;
+--   * a data de referência só muda quando a pendência é marcada de novo ou
+--     quando o número "Pendente há N dias" muda — editar outros dados do
+--     aluno NÃO reinicia a contagem;
+--   * resolver registra a data (hoje, se não informada); reabrir limpa a data.
+create or replace function privado.pendencia_antes_atualizar()
 returns trigger
 language plpgsql
 set search_path = ''
@@ -172,8 +177,21 @@ begin
   if new.aluno_id <> old.aluno_id or new.tipo <> old.tipo then
     raise exception 'Não é permitido mudar o aluno ou o tipo de uma pendência.' using errcode = '42501';
   end if;
+  if (new.marcada and not old.marcada)
+     or new.dias_informados is distinct from old.dias_informados then
+    new.data_referencia := privado.hoje();
+  end if;
+  if new.marcada and not old.marcada then
+    new.estado := 'pendente';             -- remarcar volta a pendente
+    new.resolvida_em := null;
+  end if;
+  if new.estado = 'resolvida' and new.resolvida_em is null then
+    new.resolvida_em := privado.hoje();
+  elsif new.estado = 'pendente' then
+    new.resolvida_em := null;
+  end if;
   return new;
 end $$;
 
-create trigger pendencias_imutavel before update on public.pendencias
-  for each row execute function privado.pendencia_imutavel();
+create trigger pendencias_antes_atualizar before update on public.pendencias
+  for each row execute function privado.pendencia_antes_atualizar();

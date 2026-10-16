@@ -18,5 +18,5 @@ for f in supabase/migrations/*.sql; do
   "${PSQL[@]}" -d "$DB" -f "$f"
 done
 echo "→ executando testes"
-"${PSQL[@]}" -d "$DB" -f tests/sql/10_testes_rls.sql 2>&1 | sed -n 's/^.*NOTICE:  //p; /FALHOU/p; /ERROR/p'
+(cd tests/sql && "${PSQL[@]}" -d "$DB" -f 10_testes_rls.sql) 2>&1 | sed -n 's/^.*NOTICE:  //p; /FALHOU/p; /ERROR/p'
 echo "✓ banco: todos os testes passaram"
