@@ -146,11 +146,13 @@ Todos usam somente dados fictícios. Resultados da última execução: ver `docs
 
 ## 10. Publicação
 
-1. Envie o código para a branch `main`.
-2. Em **Settings → Pages**, escolha **Source: GitHub Actions**.
-3. O fluxo **Testes** roda a cada envio; se passar, **Publicar site** publica no GitHub Pages
-   (somente `index.html`, `assets/` e as regras compartilhadas).
-4. Valide o endereço publicado: login, cadastro de um aluno de teste, geração e exclusão do aluno de teste.
+O site é publicado pelo **GitHub Pages direto da branch `main`** (Settings → Pages → *Deploy from a branch*, pasta raiz).
+Cada envio para a `main` atualiza o site em 1 a 2 minutos. O fluxo **Testes** roda a cada envio: se algum
+teste falhar, corrija antes de enviar a próxima mudança.
+
+Endereço: **https://institutonta.github.io/painel-follow-up-nta/**
+
+Depois de publicar, valide: login, cadastro de um aluno de teste, geração da mensagem e exclusão do aluno de teste.
 
 ## 11. Backup e restauração
 
