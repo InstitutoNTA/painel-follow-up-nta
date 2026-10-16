@@ -1,0 +1,18 @@
+<title>Painel de Follow-up</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="assets/css/styles.css">
+<style>
+  :root { color-scheme: light; }
+  body { background: #FFFFFF; color: #1B1B1B; padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-area-inset-right, 0px); }
+  .faixa-demo { background: #FFF4DF; border-bottom: 1px solid #F0CF8E; color: #8A5600; }
+  .faixa-demo p { max-width: 1240px; margin: 0 auto; padding: 10px max(16px, env(safe-area-inset-left, 0px)); font-size: .9rem; }
+</style>
+<div class="faixa-demo" role="note"><p><strong>Demonstração:</strong> alunos fictícios e mensagens de exemplo montadas no navegador, sem IA. Nada é salvo; recarregar a página volta ao início. A versão oficial usa login, banco de dados e a API do Claude.</p></div>
+<main id="app" aria-live="polite">
+  <div class="carregando"><span class="giro" aria-hidden="true"></span> Carregando o painel…</div>
+</main>
+<div id="toast" role="status" hidden></div>
+<script type="module" src="assets/js/app.js"></script>
